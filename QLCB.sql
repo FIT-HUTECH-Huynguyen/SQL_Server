@@ -14,7 +14,7 @@ create table maybay(
 )
 go
 create table chuyenbay(
-	macb char(5) primary key ,
+	macb char(5) ,
 	gadi varchar(50),
 	gaden varchar(50),
 	dodai int , 
@@ -23,6 +23,7 @@ create table chuyenbay(
 	chiphi int,
 	mamb int 
 
+	primary key (macb,mamb)
 	foreign key (mamb) references maybay(mamb)
 )
 go
@@ -209,16 +210,14 @@ where n.luong >= all(select max(n1.luong) from nhanvien n1)
 --36)	Cho biết tên và lương của các nhân viên không phải là phi công và có lương lớn hơn lương trung bình của tất cả các phi công.
 select distinct n.ten , n.luong
 from nhanvien n , chungnhan c
-where n.manv <> c.manv and n.luong > (select avg(n1.luong) from nhanvien n1 , chungnhan c1 where n1.manv = c1.manv) 
+where n.manv not in (select distinct c2.manv from chungnhan c2 ) and n.luong < (select avg(n1.luong) from nhanvien n1 , chungnhan c1 where n1.manv = c1.manv) 
 --37)	Cho biết tên các phi công có thể lái các máy bay có tầm bay lớn hơn 4,800km nhưng không có chứng nhận lái máy bay Boeing.
 select n.ten
 from nhanvien n 
 right join chungnhan c on c.manv = n.manv
 inner join maybay m on c.mamb = m.mamb
-where m.tambay > 4800 and c.manv in (select c1.manv from chungnhan c1 , maybay m1 where c1.mamb in 
-									(select m2.mamb from maybay m2 where m2.loai not like '%Boeing%'))
-and c.manv not in(select c3.manv from chungnhan c3 , maybay m3 where c3.mamb in 
-                 (select m4.mamb from maybay m4 where m4.loai like '%Boeing%'))
+where m.tambay > 4800 and c.manv not in(select c3.manv from chungnhan c3 , maybay m3 where c3.mamb in 
+										(select m4.mamb from maybay m4 where m4.loai like '%Boeing%'))
 --38)	Cho biết tên các phi công lái ít nhất 3 loại máy bay có tầm bay xa hơn 3200km.
 select n.ten
 from nhanvien n 
@@ -249,7 +248,8 @@ group by m.loai
 --42)	Với mỗi loại máy bay cho biết loại máy bay và tổng số chuyến bay không thể thực hiện bởi loại máy bay đó.
 select m.loai , count(cb.macb) as [tong so chuyen bay khong the thuc hien]
 from maybay m 
-inner join chuyenbay cb on cb.mamb != m.mamb
+inner join chuyenbay cb on cb.mamb = m.mamb
+where cb.dodai < m.tambay
 group by m.loai
 --43)	Với mỗi loại máy bay cho biết loại máy bay và tổng số phi công có lương lớn hơn 100,000 có thể lái loại máy bay đó.
 select m.loai , count(c.manv) as [tong so phi cong co luong lon hon 10000]
@@ -265,16 +265,67 @@ inner join chungnhan c on c.mamb = m.mamb
 left join nhanvien n on c.manv = n.manv
 group by m.loai
 --45)	Với mỗi loại máy bay cho biết loại máy bay và tổng số nhân viên không thể lái loại máy bay đó.
-select m.loai , count(c.manv) as [tong so nhan vien khong the lai]
-from maybay m , nhanvien n, chungnhan c
-where m.mamb = c.mamb and n.manv = c.manv and n.manv not in (select c1.manv from chungnhan c1 where c1.mamb in (select c2.mamb from chungnhan c2 ))
+select m.loai , count(n.manv) as [tong so nhan vien khong the lai]
+from maybay m , nhanvien n 
+where not exists(select * from maybay m2 , chungnhan c1 where m2.loai = m.loai and m2.mamb = c1.mamb and c1.manv = n.manv) 
 group by m.loai
 --46)	Với mỗi loại máy bay cho biết loại máy bay và tổng số phi công không thể lái loại máy bay đó.
+select m.loai , count(n.manv) as [tong so phi cong khong the lai]
+from maybay m , nhanvien n
+where not exists(select distinct * from maybay m2 , chungnhan c1 where m2.loai = m.loai and m2.mamb = c1.mamb and c1.manv = n.manv) 
+and n.manv in (select c2.manv from chungnhan c2 where c2.manv = n.manv) 
+group by m.loai
 --47)	Với mỗi nhân viên cho biết mã số, tên nhân viên và tổng số chuyến bay xuất phát từ Sài Gòn mà nhân viên đó có thể lái.
+select n.manv [mã số] , n.ten [họ tên] , count(cb.macb) as [tống số chuyến bay xuất phát từ Sài Gòn] 
+from nhanvien n , chungnhan c , chuyenbay cb 
+where n.manv = c.manv and c.mamb = cb.mamb and cb.macb in (select cb1.macb from chuyenbay cb1 where cb1.gadi ='SGN')
+group by n.manv , n.ten
 --48)	Với mỗi nhân viên cho biết mã số, tên nhân viên và tổng số chuyến bay xuất phát từ Sài Gòn mà nhân viên đó không thể lái.
+select n.manv [mã số] , n.ten [họ tên] , count(cb.macb) as [Tổng số chuyến bay từ Sài Gòn mà nhân viên đó không thể lái]
+from nhanvien n , chuyenbay cb 
+where not exists (select * from chungnhan c1 ,chuyenbay cb1 where c1.manv = n.manv and cb1.mamb = c1.mamb and cb.mamb = cb1.mamb)
+and cb.macb in (select cb1.macb from chuyenbay cb1 where cb1.gadi ='SGN')
+group by n.manv , n.ten
 --49)	Với mỗi phi công cho biết mã số, tên phi công và tổng số chuyến bay xuất phát từ Sài Gòn mà phi công đó có thể lái
+select n.manv [mã số] , n.ten [họ tên] , count (cb.macb) as [Tống số chuyến bay từ Saigon mà phi công lái ]
+from chungnhan c, chuyenbay cb , nhanvien n 
+where c.manv = n.manv and c.mamb = cb.mamb and cb.mamb in (select cb2.mamb from chuyenbay cb2) 
+and cb.macb in (select cb1.macb from chuyenbay cb1 where cb1.gadi ='SGN')
+group by n.manv , n.ten 
 --50)	Với mỗi phi công cho biết mã số, tên phi công và tổng số chuyến bay xuất phát từ Sài Gòn mà phi công đó không thể lái.
+select n.manv [mã số] , n.ten [họ tên] , count(cb.macb) as [Tổng số chuyến bay từ Sài Gòn mà nhân viên đó không thể lái]
+from nhanvien n , chuyenbay cb 
+where not exists (select * from chungnhan c1 ,chuyenbay cb1 where c1.manv = n.manv and cb1.mamb = c1.mamb and cb.mamb = cb1.mamb) 
+and n.manv in (select c2.manv from chungnhan c2 )
+and cb.macb in (select cb1.macb from chuyenbay cb1 where cb1.gadi ='SGN')
+group by n.manv , n.ten
 --51)	Với mỗi chuyến bay cho biết mã số chuyến bay và tổng số loại máy bay không thể thực hiện chuyến bay đó.
+select cb.macb , (select count(*) from maybay m1 where cb.dodai>m1.tambay) as [tổng số loại may bay khong the thuc hien]
+from chuyenbay cb 
+left join maybay m on cb.mamb = m.mamb
 --52)	Với mỗi chuyến bay cho biết mã số chuyến bay và tổng số loại máy bay có thể thực hiện chuyến bay đó.
+select cb.macb , (select count(*) from maybay m1 where cb.dodai<m1.tambay) as [tổng số loại may bay có the thuc hien]
+from chuyenbay cb 
+left join maybay m on cb.mamb = m.mamb
 --53)	Với mỗi chuyến bay cho biết mã số chuyến bay và tổng số nhân viên không thể lái chuyến bay đó.
+select *,(select count(*) from nhanvien n1,chuyenbay cb1 where n1.manv = c.manv and cb1.macb = cb.macb )
+from chungnhan c 
+right join nhanvien n on n.manv = c.manv 
+right join chuyenbay cb on cb.mamb = c.mamb  
+group by cb.macb
 --54)	Với mỗi chuyến bay cho biết mã số chuyến bay và tổng số phi công không thể lái chuyến bay đó.
+select * from nhanvien
+select distinct * from chungnhan
+select * from chuyenbay
+--55) Một hành khách muốn đi từ Hà Nội (HAN) đến Nha Trang (CXR) mà không phải
+--đổi chuyến bay quá một lần. Cho biết mã chuyến bay và thời gian khởi hành từ Hà Nội nếu hành khách muốn đến Nha Trang trước 16:00.
+select * 
+from chuyenbay cb , chuyenbay cb1 
+where cb.gadi Like '%HAN%' and cb.gaden = cb1.gadi and cb1.gaden like '%CXR%' or cb.gaden = cb1.gaden 
+
+--56) Cho biết tên các loại máy bay mà tất cả các phi công có thể lái đều có lương lớn hơn 200,000.
+--57) Cho biết thông tin của các đường bay mà tất cả các phi công có thể bay trên đường bay đó đều có lương lớn hơn 100,000.
+--58) Cho biết tên các phi công chỉ lái các loại máy bay có tầm bay xa hơn 3200km.
+--59) Cho biết tên các phi công chỉ lái các loại máy bay có tầm bay xa hơn 3200km và một trong số đó là Boeing.
+--60) Tìm các phi công có thể lái tất cả các loại máy bay.
+--61) Tìm các phi công có thể lái tất cả các loại máy bay Boeing.
