@@ -1,4 +1,4 @@
-﻿DROP DATABASE qlbanhang
+DROP DATABASE qlbanhang
 CREATE DATABASE QLBANHANG1
 GO
 use QLBANHANG1
@@ -377,9 +377,124 @@ select k.MAKH , k.TENKH , k.DIACHI , k.DT , k.EMAIL , case when count(c.MAHD) > 
 																			else '' end as [so luong hoa don da mua]
 from HOADON h
 inner join CHITIETHOADON c on c.MAHD = h.MAHD
-inner join KHACHHANG k on k.MAKH = h.MAKH
+right join KHACHHANG k on k.MAKH = h.MAKH
 group by k.MAKH , k.TENKH , k.DIACHI , k.DT , k.EMAIL
 
 select * from view_cau29
 
 
+--PROCEDURE
+--1.	Lấy ra danh các khách hàng đã mua hàng trong ngày X, với X là tham số truyền vào.
+create proc proc_bai1 
+@ngay_mua smalldatetime 
+as 
+	begin 
+		select * 
+		from KHACHHANG k , HOADON h 
+		where k.MAKH = h.MAKH and h.NGAY = @ngay_mua
+	end
+declare @ngay smalldatetime 
+set @ngay = '25/6/2000'
+exec proc_bai1 @ngay_mua=@ngay
+--2.	Lấy ra danh sách khách hàng có tổng trị giá các đơn hàng lớn hơn X (X là tham số).
+create proc proc_bai2 @giatri float
+as 
+	begin 
+		select k.MAKH , k.TENKH  ,sum(c.giaban*c.SL) as [tong gia tri] 
+		from  KHACHHANG k , HOADON h , CHITIETHOADON c
+		where k.MAKH = h.MAKH and h.MAHD = c.MAHD 
+		group by k.MAKH , k.TENKH 
+		having sum(c.giaban*c.SL) > @giatri				 
+	end
+declare @giatriX float
+set @giatriX = 1000
+exec proc_bai2 @giatri = @giatriX
+--3.	Lấy ra danh sách X khách hàng có tổng trị giá các đơn hàng lớn nhất (X là tham số).
+create proc proc_bai3 @soluong int
+as 
+	begin 
+		select top (@soluong) with ties k.MAKH , k.TENKH  ,sum(c.giaban) as [tong gia tri] 
+		from  KHACHHANG k , HOADON h , CHITIETHOADON c
+		where k.MAKH = h.MAKH and h.MAHD = c.MAHD 
+		group by k.MAKH , k.TENKH 
+		order by [tong gia tri] desc 				 
+	end
+exec proc_bai3 @soluong = 2 
+--4.	Lấy ra danh sách X mặt hàng có số lượng bán lớn nhất (X là tham số).
+create proc proc_bai4a @soluong int 
+as 
+	begin 
+		select top (@soluong) with ties v.MAVT , v.TENVT ,  sum(c.SL) as[so luong] 
+		from VATTU v , CHITIETHOADON c 
+		where v.MAVT = c.MAVT
+		group by v.MAVT , v.TENVT
+		order by [so luong] desc 
+	end
+exec proc_bai4a @soluong = 2
+--		Lấy ra danh sách X mặt hàng bán ra có lãi ít nhất(SUM((GIABAN-GIAMUA)*SL)
+--		(X là tham số).
+create proc proc_bai4b @soluong int 
+as 
+	begin 
+		select top (@soluong) with ties v.MAVT , v.TENVT , sum((c.GIABAN-v.GIAMUA)*c.SL) as [lai]
+		from VATTU v , CHITIETHOADON c
+		where v.MAVT = c.MAVT
+		group by v.MAVT , v.TENVT
+		order by [lai] asc
+	end
+exec proc_bai4b @soluong = 2
+--5.	Lấy ra danh sách X đơn hàng có tổng trị giá lớn nhất (X là tham số).
+create proc proc_bai5 @soluong int
+as 
+	begin 
+		select top (@soluong) with ties c.MAHD  ,sum(c.giaban*c.SL) as [tong gia tri] 
+		from  VATTU v , CHITIETHOADON c
+		where v.MAVT = c.MAVT
+		group by c.MAHD
+		order by [tong gia tri] desc 				 
+	end
+exec proc_bai5 @soluong = 2 
+--6.	Tính giá trị cho cột khuyến mãi như sau: Khuyến mãi 5% nếu SL > 100, 10% nếu SL > 500.
+create proc proc_bai6 
+as 
+	begin 
+		update CHITIETHOADON 
+		set khuyenmai= CASE
+		WHEN SL > 100 THEN GIABAN*SL*0.05
+		WHEN SL > 500 THEN GIABAN*SL*0.1
+		ELSE 0
+		end
+	end
+exec proc_bai6 
+--7.	Tính lại số lượng tồn cho TỪNG mặt hàng (SLTON = SLTON – tổng SL bán được).5000-(130,300,200,400,500,700)
+create proc proc_bai7 
+as 
+	begin 
+		update VATTU 
+		set SLTON = (SLTON - tongsl)
+		from VATTU v , (select mavt , sum(sl) as tongsl
+						from CHITIETHOADON
+						group by mavt) c 
+		where v.MAVT = c.MAVT
+	end
+exec proc_bai7
+--8.	Tính trị giá cho mỗi hóa đơn.
+create proc proc_bai8
+as 
+	begin 
+		update HOADON
+		set TONGTG = [giatri] 
+		from HOADON h , (select MAHD ,sum(c.GIABAN*c.SL-c.KHUYENMAI) as [giatri] from CHITIETHOADON c group by c.MAHD) c
+		where  h.MAHD = c.MAHD
+	end
+exec proc_bai8
+--9.	Tạo ra table KH_VIP có cấu trúc giống với cấu trúc table KHACHHANG. 
+--      Lưu các khách hàng có tổng trị giá của tất cả các đơn hàng >=10,000,000 vào table KH_VIP. SUM(TONGTIEN)>=10,000,000
+create proc proc_bai9
+as 
+	begin 
+		select distinct k.TENKH , k.MAKH , k.EMAIL , k.DT , k.DIACHI into KH_VIP 
+		from KHACHHANG k , HOADON h
+		where  k.MAKH = h.MAKH and h.TONGTG >= 1000000
+	end
+exec proc_bai9 
