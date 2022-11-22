@@ -137,7 +137,7 @@ create view view_cau1 as
 select *
 from KHACHHANG
 where DIACHI like N'%TAN BINH%' 
-
+go
 select * from view_cau1 
 --2.	Hiển thị danh sách các khách hàng gồm các thông tin mã khách hàng, tên khách hàng
 --, địa chỉ và địa chỉ E-mail của những khách hàng chưa có số điện thoại.
@@ -146,7 +146,7 @@ create view view_cau2 as
 select *
 from KHACHHANG
 WHERE DT is null
-
+go
 select * from view_cau2
 --3.	Hiển thị danh sách các khách hàng đã có số điện thoại và địa chỉ E-mail gồm mã khách hàng,
 -- tên khách hàng, địa chỉ, điện thoại, và địa chỉ E-mail.
@@ -161,7 +161,7 @@ create view view_cau4 as
 select MAVT , TENVT , GIAMUA
 from VATTU
 where DVT like N'%CAI%'
-
+go
 select * from view_cau4
 
 --5.	Hiển thị danh sách các vật tư gồm mã vật tư, tên vật tư, đơn vị tính và giá mua mà có giá mua trên 25000.
@@ -169,14 +169,14 @@ create view view_cau5 as
 select MAVT , TENVT , DVT , GIAMUA
 from VATTU
 where GIAMUA > 25000
-
+go
 select * from view_cau5
 --6.	Hiển thị danh sách các vật tư là “Gạch” (bao gồm các loại gạch) gồm mã vật tư, tên vật tư, đơn vị tính và giá mua.
 create view view_cau6 as
 select MAVT , TENVT , DVT , GIAMUA
 from VATTU
 where TENVT like '%GACH%'
-
+go
 select * from view_cau6
 --7.	Hiển thị danh sách các vật tư gồm mã vật tư, tên vật tư, đơn vị tính và giá mua mà có giá mua nằm trong khoảng từ 20000 đến 40000.
 --giamua>=20 and giamua<=40;  giamua beween 20 and 40
@@ -184,14 +184,14 @@ create view view_cau7 as
 select MAVT , TENVT , DVT , GIAMUA
 from VATTU
 where GIAMUA >= 20000 and GIAMUA <=40000 
-
+go
 select * from view_cau7
 --8.	Lấy ra các thông tin gồm Mã hóa đơn, ngày lập hóa đơn, tên khách hàng, địa chỉ khách hàng và số điện thoại.
 create view view_cau8 as
 select d.MAHD , d.NGAY , k.TENKH , k.DIACHI , k.DT 
 from HOADON d 
 inner join KHACHHANG k on d.MAKH = k.MAKH 
-
+go
 select * from view_cau8
 --9.	Lấy ra các thông tin gồm Mã hóa đơn, tên khách hàng, địa chỉ khách hàng và số điện thoại của ngày 25/5/2010.
 create view view_cau9 as
@@ -199,6 +199,7 @@ select d.MAHD ,k.TENKH , k.DIACHI , k.DT
 from HOADON d 
 inner join KHACHHANG k on d.MAKH = k.MAKH 
 where d.NGAY = '25/5/2000'
+go
 select * from view_cau9
 --10.	Lấy ra các thông tin gồm Mã hóa đơn, ngày lập hóa đơn, tên khách hàng, địa chỉ khách hàng và số điện thoại của những hóa đơn trong tháng 6/2010.
 create view view_cau10 as
@@ -206,6 +207,7 @@ select d.MAHD ,d.NGAY,k.TENKH , k.DIACHI , k.DT
 from HOADON d 
 inner join KHACHHANG k on d.MAKH = k.MAKH 
 where MONTH(d.NGAY) = 6 and YEAR(d.NGAY) = 2000 
+go
 select * from view_cau10
 --11.	Lấy ra danh sách những khách hàng (tên khách hàng, địa chỉ, số điện thoại) đã mua hàng trong tháng 6/2010.
 create view view_cau11 as
@@ -213,11 +215,9 @@ select k.TENKH , k.DIACHI , k.DT
 from HOADON d 
 inner join KHACHHANG k on d.MAKH = k.MAKH 
 where MONTH(d.NGAY) = 6 and YEAR(d.NGAY) = 2000 
-
+go
 select * from view_cau11
 --12.	Lấy ra danh sách những khách hàng không mua hàng trong tháng 6/2010 gồm các thông tin tên khách hàng, địa chỉ, số điện thoại.
-
-
 create view view_cau12 as
 select k.TENKH , k.DIACHI,k.DT
 from KHACHHANG k
@@ -226,14 +226,14 @@ select k.TENKH , k.DIACHI , k.DT
 from HOADON d 
 inner join KHACHHANG k on d.MAKH = k.MAKH 
 where MONTH(d.NGAY) = 6 and YEAR(d.NGAY) = 2000 
-
+go
 select * from view_cau12
 --13.	Lấy ra các chi tiết hóa đơn gồm các thông tin mã hóa đơn, mã vật tư, tên vật tư, đơn vị tính, giá bán, giá mua, số lượng, trị giá mua (giá mua * số lượng), trị giá bán (giá bán * số lượng).
 create view view_cau13 as
 select c.MAHD , c.MAVT , v.TENVT , v.DVT , c.GIABAN , v.GIAMUA , c.SL , (v.GIAMUA*c.SL) [tri gia mua] , (c.GIABAN * c.SL) [tri gai ban]
 from CHITIETHOADON c
 inner join VATTU v on v.MAVT = c.MAVT 
-
+go
 select * from view_cau13
 --14.	Lấy ra các chi tiết hóa đơn gồm các thông tin mã hóa đơn, mã vật tư, tên vật tư, đơn vị tính, giá bán, giá mua, số lượng, trị giá mua (giá mua * số lượng), trị giá bán (giá bán * số lượng) mà có giá bán lớn hơn hoặc bằng giá mua.
 create view view_cau14 as
@@ -241,7 +241,7 @@ select c.MAHD , c.MAVT , v.TENVT , v.DVT , c.GIABAN , v.GIAMUA , c.SL , (v.GIAMU
 from CHITIETHOADON c
 inner join VATTU v on v.MAVT = c.MAVT 
 where c.GIABAN >= v.GIAMUA
-
+go
 select * from view_cau14
 --15.	Lấy ra các thông tin gồm mã hóa đơn, mã vật tư, tên vật tư, đơn vị tính, giá bán, giá mua, số lượng, trị giá mua (giá mua * số lượng), trị giá bán (giá bán * số lượng) và cột khuyến mãi với khuyến mãi 10% cho những mặt hàng bán trong một hóa đơn SL lớn hơn 100.
 create view view_cau15 as
@@ -249,14 +249,14 @@ select c.MAHD , c.MAVT , v.TENVT , v.DVT , c.GIABAN , v.GIAMUA , c.SL , (v.GIAMU
 																															else NULL end) as [KHUYEN MAI]
 from CHITIETHOADON c
 inner join VATTU v on v.MAVT = c.MAVT 
-
+go
 select * from view_cau15
 --16.	Tìm ra những mặt hàng chưa bán được.
 create view view_cau16 as
 select *  
 from VATTU v 
 where  v.MAVT not in(select distinct MAVT from CHITIETHOADON c) 
-
+go
 select * from view_cau16
 --17.	Tạo bảng tổng hợp gồm các thông tin: mã hóa đơn, ngày hóa đơn, tên khách hàng, địa chỉ, số điện thoại, tên vật tư, đơn vị tính, giá mua, giá bán, số lượng, trị giá mua, trị giá bán. 
 create view view_cau17 as
@@ -265,7 +265,7 @@ from HOADON h
 inner join KHACHHANG k on k.MAKH = h.MAKH
 inner join CHITIETHOADON c on c.MAHD = h.MAHD
 inner join VATTU v on v.MAVT = c.MAVT 
-
+go
 select * from view_cau17
 --18.	Tạo bảng tổng hợp tháng 5/2010 gồm các thông tin: mã hóa đơn, ngày hóa đơn, tên khách hàng, địa chỉ, số điện thoại, tên vật tư, đơn vị tính, giá mua, giá bán, số lượng, trị giá mua, trị giá bán. 
 create view view_cau18 as
@@ -275,7 +275,7 @@ inner join KHACHHANG k on k.MAKH = h.MAKH
 inner join CHITIETHOADON c on c.MAHD = h.MAHD
 inner join VATTU v on v.MAVT = c.MAVT 
 where MONTH(h.NGAY) = 5 and YEAR(h.NGAY) = 2000 
-
+go
 select * from view_cau18
 --19.	Tạo bảng tổng hợp quý 1 – 2010 gồm các thông tin: mã hóa đơn, ngày hóa đơn, tên khách hàng, địa chỉ, số điện thoại, tên vật tư, đơn vị tính, giá mua, giá bán, số lượng, trị giá mua, trị giá bán. 
 create view view_cau19 as
@@ -285,7 +285,7 @@ inner join KHACHHANG k on k.MAKH = h.MAKH
 inner join CHITIETHOADON c on c.MAHD = h.MAHD
 inner join VATTU v on v.MAVT = c.MAVT 
 where MONTH(h.NGAY) = 1 or MONTH(h.NGAY) = 2 or MONTH(h.NGAY) = 3 and YEAR(h.NGAY) = 2000
-
+go
 select * from view_cau19
 --20.	Lấy ra danh sách các hóa đơn gồm các thông tin: mã hóa đơn, ngày, tên khách hàng, địa chỉ khách hàng, tổng trị giá của  hóa đơn.= sum(sl*giaban)
 create view view_cau20 as
@@ -294,6 +294,7 @@ from HOADON h
 inner join KHACHHANG k on k.MAKH = h.MAKH
 inner join CHITIETHOADON c on c.MAHD = h.MAHD
 inner join VATTU v on v.MAVT = c.MAVT
+go
 select * from view_cau20
 --21.	Lấy ra hóa đơn có tổng trị giá lớn nhất gồm các thông tin: Số hóa đơn, ngày, tên khách hàng, địa chỉ khách hàng, tổng trị giá của hóa đơn.
 create view view_cau21 as
@@ -303,7 +304,7 @@ inner join KHACHHANG k on k.MAKH = h.MAKH
 inner join CHITIETHOADON c on c.MAHD = h.MAHD
 inner join VATTU v on v.MAVT = c.MAVT
 order by [gia tri hoa don] desc
-
+go
 select * from view_cau21
 --22.	Lấy ra hóa đơn có tổng trị giá lớn nhất trong tháng 5/2010 gồm các thông tin: Số hóa đơn, ngày, tên khách hàng, địa chỉ khách hàng, tổng trị giá của hóa đơn.
 create view view_cau22 as
@@ -314,7 +315,7 @@ inner join CHITIETHOADON c on c.MAHD = h.MAHD
 inner join VATTU v on v.MAVT = c.MAVT 
 where MONTH(h.NGAY) = 5 and YEAR(h.NGAY) = 2000 
 order by [gia tri hoa don] desc
-
+go
 select * from view_cau22
 --23.	Đếm xem mỗi khách hàng có bao nhiêu hóa đơn
 create view view_cau23 as
@@ -322,7 +323,7 @@ select k.MAKH , count(h.MAHD)[so hoa don]
 from HOADON h
 inner join KHACHHANG k on k.MAKH = h.MAKH
 group by k.MAKH 
-
+go
 select * from view_cau23
 --24.	Đếm xem mỗi khách hàng, mỗi tháng có bao nhiêu hóa đơn.
 create view view_cau24 as
@@ -330,7 +331,7 @@ select k.MAKH , MONTH(h.NGAY) as[thang] , count(h.MAHD)[so hoa don]
 from HOADON h
 inner join KHACHHANG k on k.MAKH = h.MAKH
 group by k.MAKH ,  MONTH(h.NGAY)
-
+go
 select * from view_cau24
 --25.	Lấy ra các thông tin của khách hàng có số lượng hóa đơn mua hàng nhiều nhất.
 create view view_cau25 as
@@ -339,7 +340,7 @@ from HOADON h
 inner join KHACHHANG k on k.MAKH = h.MAKH
 group by k.MAKH , k.TENKH , k.DIACHI , k.DT , k.EMAIL
 order by [so hoa don] desc
- 
+ go
 select * from view_cau25
 --26.	Lấy ra các thông tin của khách hàng có số lượng hàng mua nhiều nhất.
 create view view_cau26 as
@@ -349,7 +350,7 @@ inner join CHITIETHOADON c on c.MAHD = h.MAHD
 inner join KHACHHANG k on k.MAKH = h.MAKH
 group by k.MAKH , k.TENKH , k.DIACHI , k.DT , k.EMAIL
 order by [so luong mua] desc
- 
+ go
 select * from view_cau26
 --27.	Lấy ra các thông tin về các mặt hàng mà được bán trong nhiều hóa đơn nhất.
 create view view_cau27 as
@@ -359,7 +360,7 @@ inner join CHITIETHOADON c on c.MAHD = h.MAHD
 inner join VATTU v on v.MAVT = c.MAVT
 group by v.MAVT , v.TENVT , v.DVT 
 order by [so hoa don] desc
-
+go
 select * from view_cau27
 --28.	Lấy ra các thông tin về các mặt hàng mà được bán sl nhiều nhất.
 create view view_cau28 as
@@ -369,7 +370,7 @@ inner join CHITIETHOADON c on c.MAHD = h.MAHD
 inner join VATTU v on v.MAVT = c.MAVT
 group by v.MAVT , v.TENVT , v.DVT 
 order by [so luong] desc
-
+go
 select * from view_cau28
 --29.	Lấy ra danh sách tất cả các khách hàng gồm Mã khách hàng, tên khách hàng, địa chỉ, số lượng hóa đơn đã mua (nếu khách hàng đó chưa mua hàng thì cột số lượng hóa đơn để trống)
 create view view_cau29 as
@@ -379,7 +380,7 @@ from HOADON h
 inner join CHITIETHOADON c on c.MAHD = h.MAHD
 right join KHACHHANG k on k.MAKH = h.MAKH
 group by k.MAKH , k.TENKH , k.DIACHI , k.DT , k.EMAIL
-
+go
 select * from view_cau29
 
 
@@ -498,3 +499,139 @@ as
 		where  k.MAKH = h.MAKH and h.TONGTG >= 1000000
 	end
 exec proc_bai9 
+
+
+--- Function 
+--CREATE [ OR ALTER ] FUNCTION [ schema_name. ] function_name
+--( [ { @parameter_name [ AS ][ type_schema_name. ] parameter_data_type [ NULL ]
+-- [ = default ] [ READONLY ] }
+--    [ ,...n ]
+--  ]
+--)
+--RETURNS return_data_type
+--    [ WITH <function_option> [ ,...n ] ]
+--    [ AS ]
+--    BEGIN
+--        function_body
+--        RETURN scalar_expression
+--    END
+--[ ; ]
+--1.	Viết hàm tính doanh thu của năm, với năm là tham số truyền vào.
+create function bai1(
+		@years smalldatetime) 
+	returns float 
+as
+begin
+	declare @doanhthu float
+	select @doanhthu = sum( c.GIABAN*c.SL-c.KHUYENMAI)
+	from CHITIETHOADON c
+	inner join HOADON h on h.MAHD = c.MAHD 
+	where  Year(h.NGAY) =@years 
+	return @doanhthu
+end
+
+DECLARE @TONG Float
+SET @TONG = DBO.bai1(2000)
+SELECT @TONG 
+
+--2.	Viết hàm tính doanh thu của tháng, năm, với tháng và năm là 2 tham số truyền vào.
+create function bai2(
+	@month smalldatetime,
+	@year smalldatetime
+)
+returns float 
+as 
+	begin 
+		declare @doanhthu float
+		select @doanhthu = sum( c.GIABAN*c.SL-c.KHUYENMAI)
+		from CHITIETHOADON c
+		inner join HOADON h on h.MAHD = c.MAHD 
+		where   Year(h.NGAY) = @year and MONTH(h.NGAY) = @month 
+		return @doanhthu
+	end
+
+DECLARE @DoanhThuThang Float
+SET @DoanhThuThang = DBO.bai2(6,2000)
+SELECT @DoanhThuThang
+--3.	Viết hàm tính doanh thu của khách hàng với mã khách hàng là tham số truyền vào.
+create function bai3 (
+	@makh varchar(5)
+)
+returns Float 
+as 
+	begin 
+		declare @doanhthu Float
+		select @doanhthu = sum(h.TONGTG)
+		from HOADON h
+		inner join KHACHHANG k on h.MAKH = k.MAKH
+		where k.MAKH = @makh
+		group by h.MAKH
+		return @doanhthu
+	end
+DECLARE @DoanhThuKH Float
+SET @DoanhThuKH = DBO.bai3('KH01')
+SELECT @DoanhThuKH
+--4.	Viết hàm tính tổng số lượng bán được cho từng mặt hàng theo tháng, năm nào đó. 
+--      Với mã hàng, tháng và năm là các tham số truyền vào, nếu tháng không nhập vào tức là tính tất cả các tháng.
+create function bai4(
+	@mavt varchar(5),
+	@month smalldatetime = 0 ,
+	@year smalldatetime
+)
+returns Float
+as 
+	begin
+		declare @doanhthu float
+		if(@month = 0 ) 
+			begin 
+				select @doanhthu = sum( c.GIABAN*c.SL-c.KHUYENMAI)
+				from CHITIETHOADON c
+				inner join HOADON h on h.MAHD = c.MAHD 
+				inner join VATTU v on c.MAVT = v.MAVT 
+				where   Year(h.NGAY) = @year  and v.MAVT = @mavt 
+				return @doanhthu
+			end; 
+		else
+			begin
+				select @doanhthu = sum( c.GIABAN*c.SL-c.KHUYENMAI)
+				from CHITIETHOADON c
+				inner join HOADON h on h.MAHD = c.MAHD 
+				inner join VATTU v on c.MAVT = v.MAVT 
+				where   Year(h.NGAY) = @year  and v.MAVT = @mavt and MONTH(h.NGAY) = @month
+				return @doanhthu
+			end;
+		return null
+	end 
+DECLARE @DoanhThuVT Float
+SET @DoanhThuVT = DBO.bai4('VT01',0,2000)
+SELECT @DoanhThuVT
+--5.	Viết hàm tính lãi (giá bán – giá mua) * số lượng bán được cho từng mặt hàng, với mã mặt hàng là tham số truyền vào. 
+--      Nếu mã mặt hàng không truyền vào thì tính cho tất cả các mặt hàng
+create function bai5 (
+	@mavt varchar(5) null
+)
+returns float 
+as 
+	begin 
+		declare @lai float
+		if(@mavt is null )
+			begin 
+				select @lai = sum((c.GIABAN-v.GIAMUA)*c.SL)
+				from CHITIETHOADON c 
+				inner join VATTU v on v.MAVT = c.MAVT 
+				return @lai
+			end;
+		else 
+			begin 
+				select @lai = sum( (c.GIABAN-v.GIAMUA)*c.SL)
+				from CHITIETHOADON c 
+				inner join VATTU v on v.MAVT = c.MAVT 
+				where c.MAVT = @mavt 
+				return @lai
+			end;
+		return 0
+	end 
+
+declare @lai float
+SET @lai = DBO.bai5(null)
+SELECT @lai
