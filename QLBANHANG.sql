@@ -573,65 +573,89 @@ SET @DoanhThuKH = DBO.bai3('KH01')
 SELECT @DoanhThuKH
 --4.	Viết hàm tính tổng số lượng bán được cho từng mặt hàng theo tháng, năm nào đó. 
 --      Với mã hàng, tháng và năm là các tham số truyền vào, nếu tháng không nhập vào tức là tính tất cả các tháng.
-create function bai4(
+create function dbo.bai4(
 	@mavt varchar(5),
 	@month smalldatetime = 0 ,
 	@year smalldatetime
 )
-returns Float
+returns @tongsl table (
+	mathang varchar(5) , sl int
+)
 as 
 	begin
-		declare @doanhthu float
-		if(@month = 0 ) 
-			begin 
-				select @doanhthu = sum( c.GIABAN*c.SL-c.KHUYENMAI)
+		if(@month = 0 ) insert into @tongsl
+				select c.MAVT, sum(c.SL) as[soluong]
 				from CHITIETHOADON c
 				inner join HOADON h on h.MAHD = c.MAHD 
 				inner join VATTU v on c.MAVT = v.MAVT 
-				where   Year(h.NGAY) = @year  and v.MAVT = @mavt 
-				return @doanhthu
-			end; 
-		else
-			begin
-				select @doanhthu = sum( c.GIABAN*c.SL-c.KHUYENMAI)
+				where   Year(h.NGAY) = @year  and v.MAVT like @mavt 
+				group by c.MAVT
+		else insert into @tongsl
+				select c.MAVT, sum(c.SL) as[soluong]
 				from CHITIETHOADON c
 				inner join HOADON h on h.MAHD = c.MAHD 
 				inner join VATTU v on c.MAVT = v.MAVT 
-				where   Year(h.NGAY) = @year  and v.MAVT = @mavt and MONTH(h.NGAY) = @month
-				return @doanhthu
-			end;
-		return null
-	end 
-DECLARE @DoanhThuVT Float
-SET @DoanhThuVT = DBO.bai4('VT01',0,2000)
-SELECT @DoanhThuVT
+				where   Year(h.NGAY) = @year  and v.MAVT like @mavt and MONTH(h.NGAY) = @month
+				group by c.MAVT
+		return
+	end
+select * from DBO.bai4('VT01',0,2000)
+
 --5.	Viết hàm tính lãi (giá bán – giá mua) * số lượng bán được cho từng mặt hàng, với mã mặt hàng là tham số truyền vào. 
 --      Nếu mã mặt hàng không truyền vào thì tính cho tất cả các mặt hàng
 create function bai5 (
 	@mavt varchar(5) null
 )
-returns float 
+returns @lai table(
+	mavt varchar(5) , lai float 
+)
+as
+	begin
+		if(@mavt is null ) insert into @lai
+			select c.MAVT, sum((c.GIABAN-v.GIAMUA)*c.SL) as lai
+			from CHITIETHOADON c 
+			inner join VATTU v on v.MAVT = c.MAVT 
+			group by c.MAVT
+		else insert into @lai
+			select c.MAVT,sum ( (c.GIABAN-v.GIAMUA)*c.SL) as lai
+			from CHITIETHOADON c 
+			inner join VATTU v on v.MAVT = c.MAVT 
+			where c.MAVT = @mavt 
+			group by c.MAVT
+		return
+	end  
+
+select * from DBO.bai5(null)
+
+
+-- TRIGGER
+--1.	Thực hiện việc kiểm tra các ràng buộc khóa ngoại.
+create trigger bai1 on table
+For check
 as 
-	begin 
-		declare @lai float
-		if(@mavt is null )
-			begin 
-				select @lai = sum((c.GIABAN-v.GIAMUA)*c.SL)
-				from CHITIETHOADON c 
-				inner join VATTU v on v.MAVT = c.MAVT 
-				return @lai
-			end;
-		else 
-			begin 
-				select @lai = sum( (c.GIABAN-v.GIAMUA)*c.SL)
-				from CHITIETHOADON c 
-				inner join VATTU v on v.MAVT = c.MAVT 
-				where c.MAVT = @mavt 
-				return @lai
-			end;
-		return 0
+	begin
+		if(
 	end 
 
-declare @lai float
-SET @lai = DBO.bai5(null)
-SELECT @lai
+--2.	Không cho phép CASCADE DELETE trong các ràng buộc khóa ngoại. Ví dụ không cho phép xóa các HOADON nào có SOHD còn trong table CTHD.
+create trigger bai2 
+for 
+--3.	Không cho phép user nhập vào hai vật tư có cùng tên.
+create trigger bai3 on VATTU 
+for insert , update
+as 
+	begin 
+	 
+
+--4.	Khi user đặt hàng thì KHUYENMAI là 5% nếu SL > 100, 10% nếu SL > 500.
+--5.	Chỉ cho phép mua các mặt hàng có số lượng tồn lớn hơn hoặc bằng số lượng cần mua và tính lại số lượng tồn mỗi khi có đơn hàng.SLTON>=SL—SLTON<SL
+--6.	Không cho phép user xóa một lúc nhiều hơn một vật tư.
+--7.	Mỗi hóa đơn cho phép bán tối đa 5 mặt hàng.
+--8.	Mỗi hóa đơn có tổng trị giá tối đa 50000000.
+--sum(cthd.sl*cthd.giaban),		<=50.000.000
+-- sum(i.sl*i.giaban)
+--9.	Không được phép bán hàng lỗ quá 50%. --Giaban<giamua/2
+--—GIA BAN>=GIAMUA/2
+--10.	Chỉ bán mặt hàng Gạch (các loại gạch) với số lượng là bội số của 100.
+--Tenvt like “gach%” and sl%100=0 điều kiện đúng
+--Tenvt not like  “gach%”  OR sl%100 <>0 điều kiện sai
